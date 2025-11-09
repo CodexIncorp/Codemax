@@ -78,7 +78,7 @@ class Deslizador(tk.Frame):
         if self.valor_deslizador.get() != v_clamp:
             self.valor_deslizador.set(v_clamp)
 
-    def _actualizar_entrada(self):
+    def _actualizar_entrada(self):  
         texto = str(self.valor_deslizador.get())
         if self.texto_var.get() != texto:
             self.texto_var.set(texto)
