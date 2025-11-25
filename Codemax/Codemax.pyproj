@@ -22,6 +22,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Algoritmo.py" />
     <Compile Include="Codemax.py" />
     <Compile Include="Deslizador.py">
       <SubType>Code</SubType>

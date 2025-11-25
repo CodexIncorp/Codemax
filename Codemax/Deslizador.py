@@ -6,7 +6,7 @@ class Deslizador(tk.Frame):
 
     def __init__(self, contenedor, maximo=10, inicial=None, **kwargs):
         super().__init__(contenedor, **kwargs)
-        self.minimo = 1
+        self.minimo = 2
         self.maximo = int(maximo)
         if self.maximo < self.minimo:
             self.maximo = self.minimo
