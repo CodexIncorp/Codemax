@@ -1,6 +1,9 @@
 import tkinter as tk
+from tkinter import ttk
+from tkinter import messagebox
 from Deslizador import Deslizador
 from Matriz import Matriz
+import Algoritmo as codemax
 
 
 def _crear_ventana():
@@ -62,6 +65,7 @@ def _config_ventana(root):
         bg="#2b7be9",
         fg="white",
         activebackground="#1a5fd6",
+        command=lambda: calcular(matriz),
     )
     btn_calcular.grid(row=0, column=0, columnspan=3, pady=(0, 8))
 
@@ -80,6 +84,34 @@ def _config_ventana(root):
         activebackground="#a02f2f",
     )
     btn_salir.grid(row=1, column=2, sticky="e")
+
+
+def calcular(mtx: Matriz):
+    costos = mtx.obtener_costos()
+    ofertas = mtx.obtener_ofertas()
+    demandas = mtx.obtener_demandas()
+
+    if not costos:
+        messagebox.showwarning("Calcular", "La matriz de costes esta vacia.")
+        return
+    asignaciones, coste_total = codemax.resolver_transporte(costos, ofertas, demandas)
+
+    win = tk.Toplevel()
+    win.title("Resultado - Asignaciones")
+    win.geometry("600x400")
+
+    lbl = ttk.Label(win, text=f"Costo minimo: {coste_total:.2f}")
+    lbl.pack(padx=8, pady=(8, 4))
+
+    text = tk.Text(win, wrap="none")
+    text.pack(fill="both", expand=True, padx=8, pady=8)
+    text.insert("end", "Fila\tColumna\tCantidad\tCoste unitario\tCoste lote\n")
+    text.insert("end", "-" * 60 + "\n")
+    for i, j, cant, cunit in asignaciones:
+        text.insert("end", f"{i}\t{j}\t{cant}\t{cunit:.4f}\t{cant*cunit:.4f}\n")
+    text.configure(state="disabled")
+    btn = ttk.Button(win, text="Cerrar", command=win.destroy)
+    btn.pack(pady=(0, 8))
 
 
 def main():
