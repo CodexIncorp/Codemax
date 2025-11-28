@@ -112,7 +112,7 @@ class Matriz(tk.Frame):
                     costos[i][j] = 0.0
         return costos
 
-    def obtener_ofertas(self):
+    def obtener_demandas(self):
         cols = int(self.columnas.get())
         ofertas = [0.0] * cols
         for j in range(cols):
@@ -123,7 +123,7 @@ class Matriz(tk.Frame):
                 ofertas[j] = 0.0
         return ofertas
 
-    def obtener_demandas(self):
+    def obtener_ofertas(self):
         fils = int(self.filas.get())
         demandas = [0.0] * fils
         for i in range(fils):
