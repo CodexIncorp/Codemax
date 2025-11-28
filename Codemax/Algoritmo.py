@@ -51,7 +51,6 @@ def resolver_transporte(
             costos_local[r] = costos_local[r][:n_cols]
 
     fases: List[Dict[str, Any]] = []
-    asignaciones: List[Tuple[int, int, float, float]] = []
     coste_total = 0.0
 
     # Estructuras de control
@@ -127,6 +126,26 @@ def resolver_transporte(
         if not asignable:
             break
 
+        lote_min = None
+        for i in list(filas_activas):
+            if ofertas_local[i] <= eps:
+                filas_activas.discard(i)
+                continue
+            for j in list(cols_activas):
+                if demandas_local[j] <= eps:
+                    cols_activas.discard(j)
+                    continue
+                if i >= len(costos_local) or j >= len(costos_local[i]):
+                    continue
+                cantidad_asignable = min(ofertas_local[i], demandas_local[j])
+                if cantidad_asignable <= eps:
+                    continue
+                lote = costos_local[i][j] * cantidad_asignable
+                if lote_min is None or lote < lote_min:
+                    lote_min = lote
+        if lote_min is None:
+            break
+
         # 2) Seleccionar todos las celdas con lotes minimos
         seleccionadas = []
         filas_buscar = set(filas_activas)
@@ -184,8 +203,8 @@ def resolver_transporte(
                                 idxf, idxc = i, j
             if not encontrada:
                 break
-            cantidad = min(ofertas_local[idxf], demandas_local[idxc])
-            seleccionadas.append((idxf, idxc, cantidad, costos_local[idxf][idxc]))
+            cant = min(ofertas_local[idxf], demandas_local[idxc])
+            seleccionadas.append((idxf, idxc, cant, costos_local[idxf][idxc]))
 
             filas_buscar.discard(idxf)
             cols_buscar.discard(idxc)
@@ -216,8 +235,8 @@ def resolver_transporte(
             if demandas_local[jsel] <= eps:
                 cols_activas.discard(jsel)
 
-        #Actualizar ultimo snapshot con las aplicadas
-        fases[-1]['aplicadas']=aplicadas
+        # Actualizar ultimo snapshot con las aplicadas
+        fases[-1]["aplicadas"] = aplicadas
 
         # 4) Reconstruir matriz por lotes con filas/columnas validas
         filas_activas = set(

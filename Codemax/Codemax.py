@@ -4,6 +4,7 @@ from tkinter import messagebox
 from Deslizador import Deslizador
 from Matriz import Matriz
 import Algoritmo as codemax
+from Ventana_resultado import mostrar_fases
 
 
 def _crear_ventana():
@@ -94,24 +95,8 @@ def calcular(mtx: Matriz):
     if not costos:
         messagebox.showwarning("Calcular", "La matriz de costes esta vacia.")
         return
-    asignaciones, coste_total = codemax.resolver_transporte(costos, ofertas, demandas)
-
-    win = tk.Toplevel()
-    win.title("Resultado - Asignaciones")
-    win.geometry("600x400")
-
-    lbl = ttk.Label(win, text=f"Costo minimo: {coste_total:.2f}")
-    lbl.pack(padx=8, pady=(8, 4))
-
-    text = tk.Text(win, wrap="none")
-    text.pack(fill="both", expand=True, padx=8, pady=8)
-    text.insert("end", "Fila\tColumna\tCantidad\tCoste unitario\tCoste lote\n")
-    text.insert("end", "-" * 60 + "\n")
-    for i, j, cant, cunit in asignaciones:
-        text.insert("end", f"{i}\t{j}\t{cant}\t{cunit:.4f}\t{cant*cunit:.4f}\n")
-    text.configure(state="disabled")
-    btn = ttk.Button(win, text="Cerrar", command=win.destroy)
-    btn.pack(pady=(0, 8))
+    fases, coste_total = codemax.resolver_transporte(costos, ofertas, demandas)
+    mostrar_fases(mtx.master, fases, coste_total)
 
 
 def main():
