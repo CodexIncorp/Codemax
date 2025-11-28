@@ -3,7 +3,7 @@ from tkinter import ttk
 from tkinter import messagebox
 
 
-def mostrar_fases(contenedor, fases: list, coste_total: float):
+def mostrar_fases(contenedor, fases: list, coste_total: float, eps: float = 1e-9):
     if not fases:
         messagebox.showinfo("Resultado", "No hay fases para mostrar.")
         return
@@ -70,6 +70,7 @@ def mostrar_fases(contenedor, fases: list, coste_total: float):
 
     def configurar_canvas(event):
         canvas.configure(scrollregion=canvas.bbox("all"))
+
     canvas_frame.bind("<Configure>", configurar_canvas)
 
     # Estado
@@ -89,28 +90,41 @@ def mostrar_fases(contenedor, fases: list, coste_total: float):
         aplicadas = fase.get("aplicadas", [])
         lote_min = fase.get("lote_min", None)
 
-        m = len(costos)
-        n = len(costos[0]) if m > 0 else 0
+        # Determinar filas/columnas activas
+        filas_activas = [i for i, v in enumerate(ofertas) if v > eps]
+        cols_activas = [j for j, v in enumerate(demandas) if v > eps]
+
+        if not filas_activas or not cols_activas:
+            ttk.Label(
+                canvas_frame,
+                text="No quedan filas o columnas activas en esta iteracion.",
+            ).pack(padx=8, pady=8)
+            lbl_fase.config(text=f"Iteracion {k+1} de {len(fases)}")
+            return
+
+        m = len(filas_activas)
+        n = len(cols_activas)
 
         # Encabezados de columnas
         ttk.Label(canvas_frame, text="").grid(row=0, column=0, padx=2, pady=2)
-        for j in range(n):
-            txt = f"J{j}\nD={demandas[j]:.2f}"
+        for col_idx, j in enumerate(cols_activas):
+            txt = f"D{j}={demandas[j]:.2f}"
             ttk.Label(
                 canvas_frame, text=txt, anchor="center", relief="ridge", padding=4
-            ).grid(row=0, column=1 + j, sticky="nsew", padx=1, pady=1)
+            ).grid(row=0, column=1 + col_idx, sticky="nsew", padx=1, pady=1)
 
-        for i in range(m):
+        for row_idx, i in enumerate(filas_activas):
             ttk.Label(
                 canvas_frame,
-                text=f"I{i}\nO={ofertas[i]:.2f}",
+                text=f"O{i}={ofertas[i]:.2f}",
                 anchor="center",
                 relief="ridge",
                 padding=4,
-            ).grid(row=1 + i, column=0, sticky="nsew", padx=1, pady=1)
+            ).grid(row=1 + row_idx, column=0, sticky="nsew", padx=1, pady=1)
             lbl_rows = []
-            for j in range(n):
-                txt = f"{costos[i][j]:.2f}"
+            for col_idx, j in enumerate(cols_activas):
+                cval = costos[i][j] if i < len(costos) and j < len(costos[i]) else 0.0
+                txt = f"{cval:.2f}"
                 bg = "white"
                 lbl = tk.Label(
                     canvas_frame,
@@ -122,31 +136,37 @@ def mostrar_fases(contenedor, fases: list, coste_total: float):
                     bg=bg,
                     justify="center",
                 )
-                lbl.grid(row=1 + i, column=1 + j, padx=1, pady=1, sticky="nsew")
+                lbl.grid(
+                    row=1 + row_idx, column=1 + col_idx, padx=1, pady=1, sticky="nsew"
+                )
                 lbl_rows.append(lbl)
             lbl_celdas.append(lbl_rows)
 
         for isel, jsel, cant, cunit in seleccionadas:
-            if 0 <= isel < len(lbl_celdas) and 0 <= jsel < len(lbl_celdas[isel]):
-                lbl = lbl_celdas[isel][jsel]
+            if isel in filas_activas and jsel in cols_activas:
+                row_idx = filas_activas.index(isel)
+                col_idx = cols_activas.index(jsel)
+                lbl = lbl_celdas[row_idx][col_idx]
                 lote = cant * cunit
                 lbl.config(bg="#ffd966")
-                lbl.config(text=f"{cunit:.2f}\ncant={cant:.2f}\nlote={lote:.2f}")
+                lbl.config(text=f"{cunit:.2f}\ncant = {cant:.2f}\nlote = {lote:.2f}")
 
         for isel, jsel, cant, cunit in aplicadas:
-            if 0 <= isel < len(lbl_celdas) and 0 <= jsel < len(lbl_celdas[isel]):
-                lbl = lbl_celdas[isel][jsel]
+            if isel in filas_activas and jsel in cols_activas:
+                row_idx = filas_activas.index(isel)
+                col_idx = cols_activas.index(jsel)
+                lbl = lbl_celdas[row_idx][col_idx]
                 lote = cant * cunit
                 lbl.config(bg="#b6d7a8")
-                lbl.config(text=f"{cunit:.2f}\ncant={cant:.2f}\nlote={lote:.2f}")
+                lbl.config(text=f"{cunit:.2f}\ncant = {cant:.2f}\nlote = {lote:.2f}")
 
-        for i in range(len(costos)):
-            for j in range(len(costos[i]) if costos else 0):
-                if costos[i][j] == 0.0:
-                    lbl = lbl_celdas[i][j]
-                    if lbl.cget("bg") == "white":
-                        lbl.config(bg="#d9d9d9")
-                        lbl.config(text=f"{costos[i][j]:.2f}")
+        for row_idx, i in enumerate(filas_activas):
+            for col_idx, j in enumerate(cols_activas):
+                cval = costos[i][j] if i < len(costos) and j < len(costos[i]) else 0.0
+                lbl = lbl_celdas[row_idx][col_idx]
+                if cval == 0.0 and lbl.cget("bg") == "white":
+                    lbl.config(bg="#d9d9d9")
+                    lbl.config(text=f"{cval:.2f}")
 
         txt_fase = f"Iteracion {k+1} de {len(fases)}"
         if lote_min is not None:
