@@ -86,7 +86,7 @@ def mostrar_fases(contenedor, fases: list, coste_total: float, eps: float = 1e-9
         costos = fase["costos"]
         ofertas = fase["ofertas"]
         demandas = fase["demandas"]
-        seleccionadas = fase.get("selecionadas", [])
+        seleccionadas = fase.get("seleccionadas", [])
         aplicadas = fase.get("aplicadas", [])
         lote_min = fase.get("lote_min", None)
 
@@ -101,9 +101,6 @@ def mostrar_fases(contenedor, fases: list, coste_total: float, eps: float = 1e-9
             ).pack(padx=8, pady=8)
             lbl_fase.config(text=f"Iteracion {k+1} de {len(fases)}")
             return
-
-        m = len(filas_activas)
-        n = len(cols_activas)
 
         # Encabezados de columnas
         ttk.Label(canvas_frame, text="").grid(row=0, column=0, padx=2, pady=2)
