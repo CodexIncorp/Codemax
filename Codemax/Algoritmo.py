@@ -1,9 +1,9 @@
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any
 
 
 def resolver_transporte(
     costos: List[List[float]], ofertas: List[float], demandas: List[float]
-) -> Tuple[List[Tuple[int, int, float, float]], float]:
+) -> Tuple[List[Dict[str, Any]], float]:
     """
     Entrada:
         - costos: matriz m x n de costes unitarios
@@ -50,6 +50,7 @@ def resolver_transporte(
         elif len(costos_local[r]) > n_cols:
             costos_local[r] = costos_local[r][:n_cols]
 
+    fases: List[Dict[str, Any]] = []
     asignaciones: List[Tuple[int, int, float, float]] = []
     coste_total = 0.0
 
@@ -60,13 +61,14 @@ def resolver_transporte(
     while filas_activas and cols_activas:
         # Si queda una sola fila/columna, asignar lo restante y terminar
         if len(filas_activas) == 1 or len(cols_activas) == 1:
+            aplicadas = []
             if len(filas_activas) == 1:
                 i = next(iter(filas_activas))
                 for j in sorted(cols_activas):
                     if ofertas_local[i] <= eps or demandas_local[j] <= eps:
                         continue
                     cant = min(ofertas_local[i], demandas_local[j])
-                    asignaciones.append((i, j, cant, costos_local[i][j]))
+                    aplicadas.append((i, j, cant, costos_local[i][j]))
                     coste_total += cant * costos_local[i][j]
                     ofertas_local[i] -= cant
                     demandas_local[j] -= cant
@@ -79,13 +81,25 @@ def resolver_transporte(
                     if ofertas_local[i] <= eps or demandas_local[j] <= eps:
                         continue
                     cant = min(ofertas_local[i], demandas_local[j])
-                    asignaciones.append((i, j, cant, costos_local[i][j]))
+                    aplicadas.append((i, j, cant, costos_local[i][j]))
                     coste_total += cant * costos_local[i][j]
                     ofertas_local[i] -= cant
                     demandas_local[j] -= cant
                     if ofertas_local[i] <= eps:
                         filas_activas.discard(i)
                 cols_activas.discard(j)
+
+            # Snapshot final de esta fase
+            fases.append(
+                {
+                    "costos": [row[:] for row in costos_local],
+                    "ofertas": ofertas_local[:],
+                    "demandas": demandas_local[:],
+                    "seleccionadas": [],
+                    "aplicadas": aplicadas,
+                    "lote_min": None,
+                }
+            )
 
             filas_activas = set(i for i in filas_activas if ofertas_local[i] > eps)
             cols_activas = set(j for j in cols_activas if demandas_local[j] > eps)
@@ -120,21 +134,21 @@ def resolver_transporte(
         while True:
             lote_min = None
             for i in list(filas_buscar):
-                if ofertas_local[i]<=eps:
+                if ofertas_local[i] <= eps:
                     filas_buscar.discard(i)
                     continue
                 for j in list(cols_buscar):
-                    if demandas_local[j]<=eps:
+                    if demandas_local[j] <= eps:
                         cols_buscar.discard(j)
                         continue
-                    if i >= len(costos_local)or j>=len(costos_local[i]):
+                    if i >= len(costos_local) or j >= len(costos_local[i]):
                         continue
-                    cantidad_asignable=min(ofertas_local[i],demandas_local[j])
-                    if cantidad_asignable<=eps:
+                    cantidad_asignable = min(ofertas_local[i], demandas_local[j])
+                    if cantidad_asignable <= eps:
                         continue
-                    lote=costos_local[i][j]*cantidad_asignable
-                    if lote_min is None or lote<lote_min:
-                        lote_min=lote
+                    lote = costos_local[i][j] * cantidad_asignable
+                    if lote_min is None or lote < lote_min:
+                        lote_min = lote
             if lote_min is None:
                 break
 
@@ -178,16 +192,32 @@ def resolver_transporte(
             filas_activas.discard(idxf)
             cols_activas.discard(idxc)
 
+            # Snapshot final de esta fase
+            fases.append(
+                {
+                    "costos": [row[:] for row in costos_local],
+                    "ofertas": ofertas_local[:],
+                    "demandas": demandas_local[:],
+                    "seleccionadas": seleccionadas[:],
+                    "aplicadas": [],
+                    "lote_min": lote_min,
+                }
+            )
+
         # 3) Actualizar ofertas/demandas
+        aplicadas = []
         for isel, jsel, cant, cunit in seleccionadas:
             ofertas_local[isel] -= cant
             demandas_local[jsel] -= cant
-            asignaciones.append((isel, jsel, cant, cunit))
+            aplicadas.append((isel, jsel, cant, cunit))
             coste_total += cant * cunit
             if ofertas_local[isel] <= eps:
                 filas_activas.discard(isel)
             if demandas_local[jsel] <= eps:
                 cols_activas.discard(jsel)
+
+        #Actualizar ultimo snapshot con las aplicadas
+        fases[-1]['aplicadas']=aplicadas
 
         # 4) Reconstruir matriz por lotes con filas/columnas validas
         filas_activas = set(
@@ -197,4 +227,4 @@ def resolver_transporte(
             j for j in range(len(demandas_local)) if demandas_local[j] > eps
         )
 
-    return asignaciones, coste_total
+    return fases, coste_total
