@@ -5,12 +5,12 @@ from tkinter import messagebox
 
 def mostrar_fases(contenedor, fases: list, coste_total: float, eps: float = 1e-9):
     if not fases:
-        messagebox.showinfo("Resultado", "No hay fases para mostrar.")
+        messagebox.showinfo("Resultado", "Rellene todos los campos de la matriz.")
         return
 
     win = tk.Toplevel(contenedor)
     win.title("Visualizacion de iteraciones")
-    win.geometry("900x640")
+    win.geometry("850x600")
 
     # Top: Coste total
     top = ttk.Frame(win, padding=(10, 10))
@@ -66,11 +66,24 @@ def mostrar_fases(contenedor, fases: list, coste_total: float, eps: float = 1e-9
     scroll_y.pack(side="right", fill="y")
     scroll_x.pack(side="bottom", fill="x")
     canvas.configure(yscrollcommand=scroll_y.set, xscrollcommand=scroll_x.set)
-    canvas.create_window((0, 0), window=canvas_frame, anchor="nw")
 
-    def configurar_canvas(event):
+    canvas_wid = canvas.create_window((0, 0), window=canvas_frame, anchor="center")
+
+    def configurar_canvas(event=None):
+        canvas.update_idletasks()
+        bbox = canvas.bbox((canvas_wid))
+        if bbox is None:
+            canvas.configure(scrollregion=canvas.bbox("all"))
+            return
         canvas.configure(scrollregion=canvas.bbox("all"))
 
+        cw = canvas.winfo_width()
+        ch = canvas.winfo_height()
+        cx = cw // 2
+        cy = ch // 2
+        canvas.coords(canvas_wid, cx, cy)
+
+    canvas.bind("<Configure>", configurar_canvas)
     canvas_frame.bind("<Configure>", configurar_canvas)
 
     # Estado
@@ -99,7 +112,14 @@ def mostrar_fases(contenedor, fases: list, coste_total: float, eps: float = 1e-9
                 canvas_frame,
                 text="No quedan filas o columnas activas en esta iteracion.",
             ).pack(padx=8, pady=8)
-            lbl_fase.config(text=f"Iteracion {k+1} de {len(fases)}")
+            total_fases_aplicadas = sum(1 for p in fases if p.get("aplicadas"))
+            if total_fases_aplicadas == 0:
+                lbl_fase.config(text=f"Iteracion {k+1} de {len(fases)}")
+            else:
+                aplicadas_hasta_k = sum(1 for p in fases[: k + 1] if p.get("aplicadas"))
+                lbl_fase.config(
+                    text=f"Iteracion {aplicadas_hasta_k} de {total_fases_aplicadas}"
+                )
             return
 
         # Encabezados de columnas
@@ -139,6 +159,7 @@ def mostrar_fases(contenedor, fases: list, coste_total: float, eps: float = 1e-9
                 lbl_rows.append(lbl)
             lbl_celdas.append(lbl_rows)
 
+        # Pintar seleccionadas (amarillo)
         for isel, jsel, cant, cunit in seleccionadas:
             if isel in filas_activas and jsel in cols_activas:
                 row_idx = filas_activas.index(isel)
@@ -148,6 +169,7 @@ def mostrar_fases(contenedor, fases: list, coste_total: float, eps: float = 1e-9
                 lbl.config(bg="#ffd966")
                 lbl.config(text=f"{cunit:.2f}\ncant = {cant:.2f}\nlote = {lote:.2f}")
 
+        # Pintar aplicadas (verde)
         for isel, jsel, cant, cunit in aplicadas:
             if isel in filas_activas and jsel in cols_activas:
                 row_idx = filas_activas.index(isel)
@@ -157,6 +179,7 @@ def mostrar_fases(contenedor, fases: list, coste_total: float, eps: float = 1e-9
                 lbl.config(bg="#b6d7a8")
                 lbl.config(text=f"{cunit:.2f}\ncant = {cant:.2f}\nlote = {lote:.2f}")
 
+        # Marcar 'ficticia' en gris claro si no fue pintada
         for row_idx, i in enumerate(filas_activas):
             for col_idx, j in enumerate(cols_activas):
                 cval = costos[i][j] if i < len(costos) and j < len(costos[i]) else 0.0
@@ -165,9 +188,19 @@ def mostrar_fases(contenedor, fases: list, coste_total: float, eps: float = 1e-9
                     lbl.config(bg="#d9d9d9")
                     lbl.config(text=f"{cval:.2f}")
 
-        txt_fase = f"Iteracion {k+1} de {len(fases)}"
+        aplicadas_hasta_k = sum(1 for p in fases[: k + 1] if p.get("aplicadas"))
+        total_fases_aplicadas = sum(1 for p in fases if p.get("aplicadas"))
+
+        if total_fases_aplicadas == 0:
+            txt_fase = f"Iteracion {k+1} de {len(fases)}"
+        else:
+            if fases[k].get("aplicadas"):
+                txt_fase = f"Iteracion {aplicadas_hasta_k+1} de {total_fases_aplicadas}"
+            else:
+                txt_fase = f"Fase de seleccion - Iteracion {aplicadas_hasta_k+1} de {total_fases_aplicadas}"
+
         if lote_min is not None:
-            txt_fase += f"    /   lote min. = {lote_min:.6g}"
+            txt_fase += f"\nlote min. = {lote_min:.6g}"
         lbl_fase.config(text=txt_fase)
 
     def sig():
