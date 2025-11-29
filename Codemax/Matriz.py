@@ -1,4 +1,6 @@
 import tkinter as tk
+import random
+from typing import Optional, List
 
 
 class Matriz(tk.Frame):
@@ -162,3 +164,67 @@ class Matriz(tk.Frame):
             self.demandas[i].delete(0, "end")
             self.demandas[i].insert(0, str(val))
 
+    def part_random(self, total: int, parts: int) -> List[int]:
+        if parts <= 0:
+            return []
+        if parts == 1:
+            return [total]
+
+        cortes = sorted(random.sample(range(1, total), parts - 1))
+        valores = []
+        prev = 0
+        for c in cortes:
+            valores.append(c - prev)
+            prev = c
+        valores.append(total - prev)
+        return valores
+
+    def llenar_aleatorio(
+        self,
+        filas: Optional[int] = None,
+        cols: Optional[int] = None,
+        coste_min: int = 1,
+        coste_max: int = 99,
+        demanda_min: int = 1,
+        demanda_max: int = 20,
+    ):
+        if filas is not None:
+            self.filas.set(max(1, int(filas)))
+        if cols is not None:
+            self.columnas.set(max(1, int(cols)))
+        self.update_idletasks()
+
+        m = max(1, int(self.filas.get()))
+        n = max(1, int(self.columnas.get()))
+
+        mtx_costos=[[random.randint(coste_min,coste_max)for _ in range(n)]for _ in range(m)]
+        demandas=[random.randint(demanda_min,demanda_max)for _ in range(m)]
+        sum_dem=sum(demandas)
+        if sum_dem<=0:
+            demandas=[1]*m
+            sum_dem=m
+
+        ofertas=self.part_random(sum_dem,n)
+        self.update_idletasks()
+        for i in range(m):
+            for j in range(n):
+                if(i,j)in self.celdas:
+                    e=self.celdas[(i,j)]
+                    e.delete(0,"end")
+                    e.insert(0,str(mtx_costos[i][j]))
+                else:
+                    pass
+
+        for i,val in enumerate(demandas):
+            if i in self.demandas:
+                ed=self.demandas[i]
+                ed.delete(0,"end")
+                ed.insert(0,str(val))
+
+        for j,val in enumerate(ofertas):
+            if j in self.ofertas:
+                eo=self.ofertas[j]
+                eo.delete(0,"end")
+                eo.insert(0,str(val))
+
+        self.update_idletasks()
