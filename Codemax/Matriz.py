@@ -1,9 +1,10 @@
 import tkinter as tk
+import customtkinter as ctk
 import random
 from typing import Optional, List
 
 
-class Matriz(tk.Frame):
+class Matriz(ctk.CTkFrame):
     """Matriz de costos unitarios"""
 
     def __init__(
@@ -11,7 +12,7 @@ class Matriz(tk.Frame):
         contenedor,
         filas: tk.IntVar,
         columnas: tk.IntVar,
-        ancho_celdas=8,
+        ancho_celdas=80,
         **kwargs,
     ):
         super().__init__(contenedor, **kwargs)
@@ -24,20 +25,18 @@ class Matriz(tk.Frame):
         # OP.
         self.lbl_fc = {}
 
-        self.filas.trace_add("write", lambda *a: self._reconstruir())
-        self.columnas.trace_add("write", lambda *a: self._reconstruir())
-        self.grid_frame = tk.Frame(self)
-        self.grid_frame.pack(fill="both", expand=True)
+        self.filas.trace_add("write", lambda *a: self.reconstruir())
+        self.columnas.trace_add("write", lambda *a: self.reconstruir())
+        self.grid_frame = ctk.CTkFrame(self, corner_radius=8)
+        self.grid_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-        self._reconstruir()
+        self.reconstruir()
 
-    def _reconstruir(self):
+    def reconstruir(self):
         fils = max(1, int(self.filas.get()))
         cols = max(1, int(self.columnas.get()))
 
-        valores_prev = {}
-        for (i, j), entry in self.celdas.items():
-            valores_prev[(i, j)] = entry.get()
+        valores_prev = {(i, j): entry.get() for (i, j), entry in self.celdas.items()}
         ofertas_prev = {j: e.get() for j, e in self.ofertas.items()}
         demandas_prev = {i: e.get() for i, e in self.demandas.items()}
 
@@ -49,53 +48,53 @@ class Matriz(tk.Frame):
         self.lbl_fc.clear()
 
         # OP.
-        encabezado = tk.Label(self.grid_frame, text="")
-        encabezado.grid(row=0, column=0, padx=2, pady=2)
+        encabezado = ctk.CTkLabel(self.grid_frame, text="")
+        encabezado.grid(row=0, column=0, padx=4, pady=4)
 
         for j in range(cols):
-            lbl_c = tk.Label(self.grid_frame, text=f"D{j+1}")
-            lbl_c.grid(row=0, column=1 + j, padx=2, pady=2)
+            lbl_c = ctk.CTkLabel(self.grid_frame, text=f"D{j+1}")
+            lbl_c.grid(row=0, column=1 + j, padx=4, pady=4)
             self.lbl_fc[("col", j)] = lbl_c
 
-        lbl_of = tk.Label(self.grid_frame, text="Oferta")
-        lbl_of.grid(row=0, column=1 + cols, padx=6, pady=2)
+        lbl_of = ctk.CTkLabel(self.grid_frame, text="Oferta")
+        lbl_of.grid(row=0, column=1 + cols, padx=6, pady=4)
 
         for i in range(fils):
-            lbl_f = tk.Label(self.grid_frame, text=f"O{i+1}")
-            lbl_f.grid(row=1 + i, column=0, padx=2, pady=2)
+            lbl_f = ctk.CTkLabel(self.grid_frame, text=f"O{i+1}")
+            lbl_f.grid(row=1 + i, column=0, padx=4, pady=4)
             self.lbl_fc[("row", i)] = lbl_f
 
             for j in range(cols):
-                e = tk.Entry(self.grid_frame, width=self.ancho_celdas, justify="center")
+                e = ctk.CTkEntry(
+                    self.grid_frame, width=self.ancho_celdas, justify="center"
+                )
                 # restaurar valor si existía
                 if (i, j) in valores_prev:
                     e.insert(0, valores_prev[(i, j)])
-                else:
-                    e.insert(0, "")  # vacío por defecto
-                e.grid(row=1 + i, column=1 + j, padx=2, pady=2, sticky="ew")
                 self.celdas[(i, j)] = e
+                e.grid(row=1 + i, column=1 + j, padx=2, pady=2, sticky="ew")
 
-            ed = tk.Entry(self.grid_frame, width=self.ancho_celdas, justify="center")
+            ed = ctk.CTkEntry(
+                self.grid_frame, width=self.ancho_celdas, justify="center"
+            )
             if i in demandas_prev:
                 ed.insert(0, demandas_prev[i])
-            else:
-                ed.insert(0, "")
-            ed.grid(row=1 + i, column=1 + cols, padx=(8, 2), pady=2)
             self.demandas[i] = ed
+            ed.grid(row=1 + i, column=1 + cols, padx=(8, 2), pady=2)
 
-        lbl_dem = tk.Label(self.grid_frame, text="Demanda")
-        lbl_dem.grid(row=1 + fils, column=0, padx=2, pady=2)
+        lbl_dem = ctk.CTkLabel(self.grid_frame, text="Demanda")
+        lbl_dem.grid(row=1 + fils, column=0, padx=4, pady=4)
 
         for j in range(cols):
-            eo = tk.Entry(self.grid_frame, width=self.ancho_celdas, justify="center")
+            eo = ctk.CTkEntry(
+                self.grid_frame, width=self.ancho_celdas, justify="center"
+            )
             if j in ofertas_prev:
                 eo.insert(0, ofertas_prev[j])
-            else:
-                eo.insert(0, "")
-            eo.grid(row=1 + fils, column=1 + j, padx=2, pady=(2, 8))
             self.ofertas[j] = eo
+            eo.grid(row=1 + fils, column=1 + j, padx=2, pady=(2, 8))
 
-        suma_lbl = tk.Label(self.grid_frame, text="")
+        suma_lbl = ctk.CTkLabel(self.grid_frame, text="")
         suma_lbl.grid(row=1 + fils, column=1 + cols, padx=2, pady=2)
 
         for c in range(1 + cols + 1):
@@ -116,25 +115,25 @@ class Matriz(tk.Frame):
 
     def obtener_demandas(self):
         cols = int(self.columnas.get())
-        ofertas = [0.0] * cols
+        demandas = [0.0] * cols
         for j in range(cols):
             texto = self.ofertas[j].get().strip()
             try:
-                ofertas[j] = float(texto) if texto != "" else 0.0
+                demandas[j] = float(texto) if texto != "" else 0.0
             except ValueError:
-                ofertas[j] = 0.0
-        return ofertas
+                demandas[j] = 0.0
+        return demandas
 
     def obtener_ofertas(self):
         fils = int(self.filas.get())
-        demandas = [0.0] * fils
+        ofertas = [0.0] * fils
         for i in range(fils):
             texto = self.demandas[i].get().strip()
             try:
-                demandas[i] = float(texto) if texto != "" else 0.0
+                ofertas[i] = float(texto) if texto != "" else 0.0
             except ValueError:
-                demandas[i] = 0.0
-        return demandas
+                ofertas[i] = 0.0
+        return ofertas
 
     def fijar_costos(self, matriz):
         fils = len(matriz)
@@ -189,42 +188,44 @@ class Matriz(tk.Frame):
         demanda_max: int = 20,
     ):
         if filas is not None:
-            self.filas.set(max(1, int(filas)))
+            self.filas.set(max(1, filas))
         if cols is not None:
-            self.columnas.set(max(1, int(cols)))
+            self.columnas.set(max(1, cols))
         self.update_idletasks()
 
         m = max(1, int(self.filas.get()))
         n = max(1, int(self.columnas.get()))
 
-        mtx_costos=[[random.randint(coste_min,coste_max)for _ in range(n)]for _ in range(m)]
-        demandas=[random.randint(demanda_min,demanda_max)for _ in range(m)]
-        sum_dem=sum(demandas)
-        if sum_dem<=0:
-            demandas=[1]*m
-            sum_dem=m
+        mtx_costos = [
+            [random.randint(coste_min, coste_max) for _ in range(n)] for _ in range(m)
+        ]
+        demandas = [random.randint(demanda_min, demanda_max) for _ in range(m)]
+        sum_dem = sum(demandas)
+        if sum_dem <= 0:
+            demandas = [1] * m
+            sum_dem = m
 
-        ofertas=self.part_random(sum_dem,n)
+        ofertas = self.part_random(sum_dem, n)
         self.update_idletasks()
         for i in range(m):
             for j in range(n):
-                if(i,j)in self.celdas:
-                    e=self.celdas[(i,j)]
-                    e.delete(0,"end")
-                    e.insert(0,str(mtx_costos[i][j]))
+                if (i, j) in self.celdas:
+                    e = self.celdas[(i, j)]
+                    e.delete(0, "end")
+                    e.insert(0, str(mtx_costos[i][j]))
                 else:
                     pass
 
-        for i,val in enumerate(demandas):
+        for i, val in enumerate(demandas):
             if i in self.demandas:
-                ed=self.demandas[i]
-                ed.delete(0,"end")
-                ed.insert(0,str(val))
+                ed = self.demandas[i]
+                ed.delete(0, "end")
+                ed.insert(0, str(val))
 
-        for j,val in enumerate(ofertas):
+        for j, val in enumerate(ofertas):
             if j in self.ofertas:
-                eo=self.ofertas[j]
-                eo.delete(0,"end")
-                eo.insert(0,str(val))
+                eo = self.ofertas[j]
+                eo.delete(0, "end")
+                eo.insert(0, str(val))
 
         self.update_idletasks()
