@@ -6,6 +6,8 @@ import Algoritmo as codemax
 from Ventana_resultado import mostrar_fases
 import random
 from typing import Any, Dict
+import customtkinter
+
 
 BG = "#f7f8fb"
 CARD = "#ffffff"
