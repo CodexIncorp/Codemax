@@ -40,12 +40,20 @@ def config_ventana(root):
 
     state: Dict[str, Any] = {"mtx": None}
 
-    frame_mtx=ctk.CTkFrame(root,fg_color="transparent")
-    frame_mtx.pack(fill="both",expand=True,padx=20,pady=20)
+    frame_mtx = ctk.CTkFrame(root, fg_color="transparent")
+    frame_mtx.pack(fill="both", expand=True, padx=20, pady=20)
 
     def crear_mtx():
-        for m in frame_mtx.winfo_children():
-            m.destroy()
+        mtx_old = state.get("mtx")
+        if mtx_old is not None:
+            try:
+                mtx_old.limpiar_trazas()
+            except Exception:
+                pass
+            try:
+                mtx_old.destroy()
+            except Exception:
+                pass
         mtx = Matriz(frame_mtx, filas_var, cols_var)
         mtx.pack(fill="both", expand=True)
         state["mtx"] = mtx
@@ -61,12 +69,18 @@ def config_ventana(root):
     def aleatorio():
         filasr = random.randint(2, 10)
         colsr = random.randint(2, 10)
+        mtx = crear_mtx()
         filas_var.set(filasr)
         cols_var.set(colsr)
-        slider_ofer.set_valor(filasr)
-        slider_dem.set_valor(colsr)
-        mtx = crear_mtx()
-        mtx.llenar_aleatorio(filas=filasr, cols=colsr)
+
+        for s, v in ((slider_ofer, filasr), (slider_dem, colsr)):
+            if hasattr(s, "set_valor"):
+                try:
+                    s.set_valor(v)
+                except Exception:
+                    pass
+
+        root.after_idle(lambda: mtx.llenar_aleatorio(filas=filasr, cols=colsr))
 
     btn_limpiar = ctk.CTkButton(bact_frame, text="Limpiar", command=limpiar)
     btn_aleatorio = ctk.CTkButton(bact_frame, text="Aleatorio", command=aleatorio)

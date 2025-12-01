@@ -25,12 +25,18 @@ class Matriz(ctk.CTkFrame):
         # OP.
         self.lbl_fc = {}
 
-        self.filas.trace_add("write", lambda *a: self.reconstruir())
-        self.columnas.trace_add("write", lambda *a: self.reconstruir())
+        self.trace_filas = self.filas.trace_add("write", self.call_rebuild)
+        self.trace_cols = self.columnas.trace_add("write", self.call_rebuild)
         self.grid_frame = ctk.CTkFrame(self, corner_radius=8)
         self.grid_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.reconstruir()
+
+    def call_rebuild(self, *args):
+        try:
+            self.reconstruir()
+        except Exception:
+            pass
 
     def reconstruir(self):
         fils = max(1, int(self.filas.get()))
@@ -187,10 +193,12 @@ class Matriz(ctk.CTkFrame):
         demanda_min: int = 1,
         demanda_max: int = 20,
     ):
-        if filas is not None:
-            self.filas.set(max(1, filas))
-        if cols is not None:
-            self.columnas.set(max(1, cols))
+
+        if filas is not None and filas != self.filas.get():
+            self.filas.set(max(1, int(filas)))
+        if cols is not None and cols != self.columnas.get():
+            self.columnas.set(max(1, int(cols)))
+        self.reconstruir()
         self.update_idletasks()
 
         m = max(1, int(self.filas.get()))
@@ -206,7 +214,6 @@ class Matriz(ctk.CTkFrame):
             sum_dem = m
 
         ofertas = self.part_random(sum_dem, n)
-        self.update_idletasks()
         for i in range(m):
             for j in range(n):
                 if (i, j) in self.celdas:
@@ -229,3 +236,19 @@ class Matriz(ctk.CTkFrame):
                 eo.insert(0, str(val))
 
         self.update_idletasks()
+
+    def limpiar_trazas(self):
+        try:
+            if hasattr(self, "trace_filas"):
+                self.filas.trace_remove("write", self.trace_filas)
+        except Exception:
+            pass
+        try:
+            if hasattr(self, "trace_cols"):
+                self.columnas.trace_remove("write", self.trace_cols)
+        except Exception:
+            pass
+
+    def destroy(self):
+        self.limpiar_trazas()
+        super().destroy()
