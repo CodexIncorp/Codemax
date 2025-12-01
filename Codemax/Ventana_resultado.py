@@ -30,10 +30,12 @@ def mostrar_fases(contenedor, fases: list, coste_total: float, eps: float = 1e-9
     )
     lbl_coste.pack(padx=12, pady=8)
 
-    lbl_fase = ctk.CTkLabel(top, text="", font=("Seogue UI", 11))
+    lbl_fase = ctk.CTkLabel(
+        top, text="", font=("Seogue UI", 11), fg_color="transparent"
+    )
     lbl_fase.pack(side="left", anchor="n", pady=6)
 
-    info_frame = ctk.CTkFrame(win)
+    info_frame = ctk.CTkFrame(win, fg_color="transparent")
     info_frame.pack(fill="x", pady=(6, 10), padx=8)
 
     def info_item(contenedor, color, text):
@@ -50,7 +52,7 @@ def mostrar_fases(contenedor, fases: list, coste_total: float, eps: float = 1e-9
     iframe.pack(anchor="w")
     info_item(iframe, "#ffd966", "Celda seleccionada en la fase (antes de aplicar)")
     info_item(iframe, "#b6d7a8", "Asignacion aplicada en la fase")
-    info_item(iframe, "#d9d9d9", "Fila/Columna ficticia")
+    info_item(iframe, "#bdbdbd", "Fila/Columna ficticia")
 
     # Controles simples
     ctrl_frame = ctk.CTkFrame(top)
@@ -204,7 +206,7 @@ def mostrar_fases(contenedor, fases: list, coste_total: float, eps: float = 1e-9
                 if cval == 0.0 and (
                     color_actual is None or color_actual in ("white", "#ffffff")
                 ):
-                    lbl.configure(fg_color="#d9d9d9", text=f"{cval:.2f}")
+                    lbl.configure(fg_color="#bdbdbd", text=f"{cval:.2f}")
 
         grid_center.update_idletasks()
         gw = grid_center.winfo_reqwidth()
