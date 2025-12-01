@@ -82,10 +82,17 @@ def config_ventana(root):
 
         root.after_idle(lambda: mtx.llenar_aleatorio(filas=filasr, cols=colsr))
 
-    btn_limpiar = ctk.CTkButton(bact_frame, text="Limpiar", command=limpiar)
     btn_aleatorio = ctk.CTkButton(bact_frame, text="Aleatorio", command=aleatorio)
-    btn_limpiar.pack(side="left", padx=6)
+    btn_limpiar = ctk.CTkButton(
+        bact_frame,
+        text="Limpiar",
+        fg_color="#ff4d4d",
+        hover_color="#ff6666",
+        text_color="white",
+        command=limpiar,
+    )
     btn_aleatorio.pack(side="left", padx=6)
+    btn_limpiar.pack(side="left", padx=6)
 
     # Sliders
     frame_sliders = ctk.CTkFrame(root)
