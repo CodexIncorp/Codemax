@@ -1,6 +1,6 @@
 import tkinter as tk
 import customtkinter as ctk
-from tkinter import ttk, messagebox
+from tkinter import messagebox
 from Deslizador import Deslizador
 from Matriz import Matriz
 import Algoritmo as codemax
@@ -38,6 +38,36 @@ def config_ventana(root):
 
     bact_frame = ctk.CTkFrame(top_bar, fg_color="transparent")
     bact_frame.pack(side="right")
+
+    # Sliders
+    frame_sliders = ctk.CTkFrame(root)
+    frame_sliders.pack(fill="x", padx=20, pady=(6, 8))
+    frame_sliders.columnconfigure(0, weight=1)
+    frame_sliders.columnconfigure(1, weight=1)
+
+    # Frame para el deslizador de ofertas
+    frame_ofer = ctk.CTkFrame(frame_sliders, fg_color="transparent")
+    frame_ofer.grid(row=0, column=0, padx=(0, 6), sticky="ew")
+    lbl_ofer = ctk.CTkLabel(frame_ofer, text="Filas (ofertas)")
+    lbl_ofer.pack(anchor="w")
+    slider_ofer = Deslizador(frame_ofer, inicial=filas_var.get())
+    slider_ofer.pack(fill="x", pady=(4, 0))
+    slider_ofer.set_valor(filas_var.get())
+    slider_ofer.valor_deslizador.trace_add(
+        "write", lambda *a: filas_var.set(slider_ofer.get_valor())
+    )
+
+    # Frame para el deslizador de demandas
+    frame_dem = ctk.CTkFrame(frame_sliders, fg_color="transparent")
+    frame_dem.grid(row=0, column=1, padx=(6, 0), sticky="ew")
+    lbl_dem = ctk.CTkLabel(frame_dem, text="Columnas (demandas)")
+    lbl_dem.pack(anchor="w")
+    slider_dem = Deslizador(frame_dem, inicial=cols_var.get())
+    slider_dem.pack(fill="x", pady=(4, 0))
+    slider_dem.set_valor(cols_var.get())
+    slider_dem.valor_deslizador.trace_add(
+        "write", lambda *a: cols_var.set(slider_dem.get_valor())
+    )
 
     state: Dict[str, Any] = {"mtx": None}
 
@@ -94,36 +124,6 @@ def config_ventana(root):
     )
     btn_aleatorio.pack(side="left", padx=6)
     btn_limpiar.pack(side="left", padx=6)
-
-    # Sliders
-    frame_sliders = ctk.CTkFrame(root)
-    frame_sliders.pack(fill="x", padx=20, pady=(6, 8))
-    frame_sliders.columnconfigure(0, weight=1)
-    frame_sliders.columnconfigure(1, weight=1)
-
-    # Frame para el deslizador de ofertas
-    frame_ofer = ctk.CTkFrame(frame_sliders, fg_color="transparent")
-    frame_ofer.grid(row=0, column=0, padx=(0, 6), sticky="ew")
-    lbl_ofer = ctk.CTkLabel(frame_ofer, text="Filas (ofertas)")
-    lbl_ofer.pack(anchor="w")
-    slider_ofer = Deslizador(frame_ofer, inicial=filas_var.get())
-    slider_ofer.pack(fill="x", pady=(4, 0))
-    slider_ofer.set_valor(filas_var.get())
-    slider_ofer.valor_deslizador.trace_add(
-        "write", lambda *a: filas_var.set(slider_ofer.get_valor())
-    )
-
-    # Frame para el deslizador de demandas
-    frame_dem = ctk.CTkFrame(frame_sliders, fg_color="transparent")
-    frame_dem.grid(row=0, column=1, padx=(6, 0), sticky="ew")
-    lbl_dem = ctk.CTkLabel(frame_dem, text="Columnas (demandas)")
-    lbl_dem.pack(anchor="w")
-    slider_dem = Deslizador(frame_dem, inicial=cols_var.get())
-    slider_dem.pack(fill="x", pady=(4, 0))
-    slider_dem.set_valor(cols_var.get())
-    slider_dem.valor_deslizador.trace_add(
-        "write", lambda *a: cols_var.set(slider_dem.get_valor())
-    )
 
     crear_mtx()
 
