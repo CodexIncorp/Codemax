@@ -7,6 +7,7 @@ import Algoritmo as codemax
 from Ventana_resultado import mostrar_fases
 import random
 from typing import Any, Dict
+import math
 
 
 ctk.set_appearance_mode("light")
@@ -138,16 +139,137 @@ def config_ventana(root):
     btn_calcular.pack(pady=(6, 0))
 
 
+def es_numero(text: str) -> bool:
+    if text is None:
+        return False
+    s = str(text).strip()
+    if s == "":
+        return False
+    try:
+        n = float(s)
+    except Exception:
+        return False
+    if math.isnan(n) or math.isinf(n):
+        return False
+    return True
+
+
 def calcular(mtx: Matriz):
+    try:
+        for (i, j), e in list(mtx.celdas.items()):
+            try:
+                e.configure(fg_color="white")
+            except Exception:
+                try:
+                    e.configure(bg="white")
+                except Exception:
+                    pass
+        for j, e in list(mtx.ofertas.items()):
+            try:
+                e.configure(fg_color="white")
+            except Exception:
+                try:
+                    e.configure(bg="white")
+                except Exception:
+                    pass
+        for j, e in list(mtx.demandas.items()):
+            try:
+                e.configure(fg_color="white")
+            except Exception:
+                try:
+                    e.configure(bg="white")
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+    inv_celdas = []
+    inv_of = []
+    inv_dem = []
+
+    for (i, j), e in list(mtx.celdas.items()):
+        try:
+            txt = e.get().strip()
+        except Exception:
+            txt = ""
+        if not es_numero(txt):
+            inv_celdas.append((i, j, txt))
+            try:
+                e.configure(fg_color="#ffc3c3")
+            except Exception:
+                try:
+                    e.configure(bg="#ffc3c3")
+                except Exception:
+                    pass
+
+    for j, e in list(mtx.ofertas.items()):
+        try:
+            txt = e.get().strip()
+        except Exception:
+            txt = ""
+        if not es_numero(txt):
+            inv_of.append((j, txt))
+            try:
+                e.configure(fg_color="#ffc3c3")
+            except Exception:
+                try:
+                    e.configure(bg="#ffc3c3")
+                except Exception:
+                    pass
+
+    for i, e in list(mtx.demandas.items()):
+        try:
+            txt = e.get().strip()
+        except Exception:
+            txt = ""
+        if not es_numero(txt):
+            inv_dem.append((i, txt))
+            try:
+                e.configure(fg_color="#ffc3c3")
+            except Exception:
+                try:
+                    e.configure(bg="#ffc3c3")
+                except Exception:
+                    pass
+
+    if inv_celdas or inv_of or inv_dem:
+        messagebox.showerror(
+            "Entradas invalidas", "Corrija las entradas resaltadas en rojo."
+        )
+        try:
+            if inv_celdas:
+                i, j, _ = inv_celdas[0]
+                mtx.celdas[(i, j)].focus_set()
+            elif inv_of:
+                j, _ = inv_of[0]
+                mtx.ofertas[j].focus_set()
+            else:
+                i, _ = inv_dem[0]
+                mtx.demandas[i].focus_set()
+        except Exception:
+            pass
+        return
+
     costos = mtx.obtener_costos()
     ofertas = mtx.obtener_ofertas()
     demandas = mtx.obtener_demandas()
 
     if not costos:
-        messagebox.showwarning("Calcular", "La matriz de costes esta vacia.")
+        messagebox.showerror("Error", "La matriz de costes esta vacia.")
         return
-    fases, coste_total = codemax.resolver_transporte(costos, ofertas, demandas)
-    mostrar_fases(mtx.master, fases, coste_total)
+
+    try:
+        fases, coste_total = codemax.resolver_transporte(costos, ofertas, demandas)
+    except Exception as e:
+        messagebox.showerror(
+            "Error al resolver",
+            f"Ocurrio un error no esperado al resolver el problema:\n{e}",
+        )
+        return
+    try:
+        mostrar_fases(mtx.master, fases, coste_total)
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudieron mostrar las iteraciones:\n{e}")
 
 
 def main():
