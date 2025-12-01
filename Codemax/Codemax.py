@@ -15,8 +15,8 @@ ctk.set_default_color_theme("blue")
 
 def crear_ventana():
     root = ctk.CTk()
-    w_window = 900
-    h_window = 560
+    w_window = 950
+    h_window = 600
     center_x_screen = (root.winfo_screenwidth() // 2) - (w_window // 2)
     center_y_screen = (root.winfo_screenheight() // 2) - (h_window // 2)
     root.geometry(f"{w_window}x{h_window}+{center_x_screen}+{center_y_screen}")

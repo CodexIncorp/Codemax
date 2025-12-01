@@ -1,7 +1,9 @@
 import tkinter as tk
-from tkinter import ttk
 from tkinter import messagebox
+from turtle import width
 import customtkinter as ctk
+
+ctk.set_appearance_mode("system")
 
 
 def mostrar_fases(contenedor, fases: list, coste_total: float, eps: float = 1e-9):
@@ -11,11 +13,11 @@ def mostrar_fases(contenedor, fases: list, coste_total: float, eps: float = 1e-9
 
     win = ctk.CTkToplevel(contenedor)
     win.title("Visualizacion de iteraciones")
-    win.geometry("850x600")
+    win.geometry("950x640")
 
     # Top: Coste total
     top = ctk.CTkFrame(win)
-    top.pack(fill="x", padx=10, pady=10)
+    top.pack(fill="x", padx=10, pady=8)
 
     coste_frame = ctk.CTkFrame(top, fg_color="#f4cccc", corner_radius=6)
     coste_frame.pack(side="left", padx=(0, 12))
@@ -31,7 +33,7 @@ def mostrar_fases(contenedor, fases: list, coste_total: float, eps: float = 1e-9
     lbl_fase.pack(side="left", anchor="n", pady=6)
 
     info_frame = ctk.CTkFrame(win)
-    info_frame.pack(fill="x", pady=10, padx=8)
+    info_frame.pack(fill="x", pady=(6, 10), padx=8)
 
     def info_item(contenedor, color, text):
         box = ctk.CTkFrame(
@@ -54,37 +56,39 @@ def mostrar_fases(contenedor, fases: list, coste_total: float, eps: float = 1e-9
     ctrl_frame.pack(side="right")
     btn_ant = ctk.CTkButton(ctrl_frame, text="Anterior")
     btn_sig = ctk.CTkButton(ctrl_frame, text="Siguiente")
-    btn_ant.grid(row=0, column=0, padx=4)
-    btn_sig.grid(row=0, column=1, padx=4)
+    btn_ant.grid(row=0, column=0, padx=6)
+    btn_sig.grid(row=0, column=1, padx=6)
 
     # Area central con scroll para matriz
-    canvas = tk.Canvas(win, bg="white", highlightthickness=0)
+    canvas = tk.Canvas(win, bg=win.cget("bg"), highlightthickness=0)
     canvas.pack(fill="both", expand=True, padx=8, pady=8)
-    canvas_frame = ctk.CTkFrame(canvas)
+    canvas_frame = ctk.CTkFrame(canvas, fg_color="transparent")
+    canvas_wid = canvas.create_window((0, 0), window=canvas_frame, anchor="nw")
+
     scroll_y = ctk.CTkScrollbar(win, orientation="vertical", command=canvas.yview)
     scroll_x = ctk.CTkScrollbar(win, orientation="horizontal", command=canvas.xview)
     scroll_y.pack(side="right", fill="y")
     scroll_x.pack(side="bottom", fill="x")
     canvas.configure(yscrollcommand=scroll_y.set, xscrollcommand=scroll_x.set)
 
-    canvas_wid = canvas.create_window((0, 0), window=canvas_frame, anchor="center")
-
-    def configurar_canvas(event=None):
-        canvas.update_idletasks()
-        bbox = canvas.bbox(canvas_wid)
-        if bbox is None:
-            canvas.configure(scrollregion=canvas.bbox("all"))
-            return
+    def configurar_frame(event=None):
         canvas.configure(scrollregion=canvas.bbox("all"))
 
-        cw = canvas.winfo_width()
-        ch = canvas.winfo_height()
-        cx = cw // 2
-        cy = ch // 2
-        canvas.coords(canvas_wid, cx, cy)
+    canvas_frame.bind("<Configure>", configurar_frame)
+
+    def configurar_canvas(event):
+        try:
+            canvas.itemconfigure(canvas_wid, width=event.width)
+        except Exception:
+            pass
+        canvas.configure(scrollregion=canvas.bbox("all"))
 
     canvas.bind("<Configure>", configurar_canvas)
-    canvas_frame.bind("<Configure>", configurar_canvas)
+
+    def mousewheel(event):
+        canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+    canvas.bind_all("<MouseWheel>", mousewheel)
 
     # Estado
     idx = {"i": 0}
@@ -120,6 +124,7 @@ def mostrar_fases(contenedor, fases: list, coste_total: float, eps: float = 1e-9
                 lbl_fase.configure(
                     text=f"Iteracion {aplicadas_hasta_k} de {total_fases_aplicadas}"
                 )
+            canvas.configure(scrollregion=canvas.bbox("all"))
             return
 
         # Encabezados de columnas
@@ -144,7 +149,7 @@ def mostrar_fases(contenedor, fases: list, coste_total: float, eps: float = 1e-9
                     width=80,
                     height=40,
                     fg_color="white",
-                    corner_radius=4,
+                    corner_radius=6,
                 )
                 lbl.grid(
                     row=1 + row_idx, column=1 + col_idx, padx=1, pady=1, sticky="nsew"
@@ -181,7 +186,13 @@ def mostrar_fases(contenedor, fases: list, coste_total: float, eps: float = 1e-9
             for col_idx, j in enumerate(cols_activas):
                 cval = costos[i][j] if i < len(costos) and j < len(costos[i]) else 0.0
                 lbl = lbl_celdas[row_idx][col_idx]
-                if cval == 0.0 and lbl.cget("fg_color") == "white":
+                try:
+                    color_actual = lbl.cget("fg_color")
+                except Exception:
+                    color_actual = None
+                if cval == 0.0 and (
+                    color_actual is None or color_actual in ("white", "#ffffff")
+                ):
                     lbl.configure(fg_color="#d9d9d9", text=f"{cval:.2f}")
 
         aplicadas_hasta_k = sum(1 for p in fases[: k + 1] if p.get("aplicadas"))
@@ -196,8 +207,11 @@ def mostrar_fases(contenedor, fases: list, coste_total: float, eps: float = 1e-9
                 txt_fase = f"Fase de seleccion - Iteracion {aplicadas_hasta_k+1} de {total_fases_aplicadas}"
 
         if lote_min is not None:
-            txt_fase += f"\nlote min. = {lote_min:.6g}"
+            txt_fase += f"\nLote minimo = {lote_min:.6g}"
         lbl_fase.configure(text=txt_fase)
+
+        canvas.update_idletasks()
+        canvas.configure(scrollregion=canvas.bbox("all"))
 
     def sig():
         if idx["i"] < len(fases) - 1:
